@@ -353,6 +353,10 @@ Get Hopital Data
     ${info}=    Run Keyword If    ${have_info}    Get Text    ${HOPITAL_INFO_TEXT}    ELSE    Set Variable    ${EMPTY}
     ${info}=    Replace String    ${info}    "    ${EMPTY}    
 	${info}=    Replace String    ${info}    '    ${EMPTY}
+	${info_count}=    Get Length    ${info}
+	${info}=    Run Keyword If    ${info_count}>10000    Get Substring    ${info}    0    10000    ELSE    Set Variable    ${info}
+	${ls_info}=    Split String From Right    ${info}    ,    1
+	${info}=    Set Variable If    ${info_count}>=10000    @{ls_info}[1]    ${info}
     
     ${spec_id}=    Set Variable    ${EMPTY}
     ${ls_chuyen_khoa}=    Get WebElements    ${HOPITAL_SPECIAL_LIST}
@@ -361,7 +365,7 @@ Get Hopital Data
     \    ${spec}=    Get Text    ${element}
     \    ${id}=    Get Specialist ID    ${spec}
     \    ${spec_id}=    Run Keyword If    '${id}'!='None'    Set Variable If    '${i_spec}'=='0'    ${id}    ${spec_id}, ${id}    ELSE    Set Variable    ${spec_id}
-    \    ${i_spec}=    Evaluate    ${i_spec}+1    
+    \    ${i_spec}=    Run Keyword If    '${id}'!='None'    Evaluate    ${i_spec}+1    ELSE    Set Variable    ${i_spec}
     
     ${service}=    Set Variable    ${EMPTY}
     ${ls_dich_vu}=    Get WebElements    ${HOPITAL_SERVICE_LIST}
