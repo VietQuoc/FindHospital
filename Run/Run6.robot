@@ -26,4 +26,5 @@ Force Tags    all
 
 Get All Data5
     Maximize Browser Window
-    RUN Get Hopital Datas    36425    DF    7285
+    RUN Get Hopital Datas    36425    DF    20
+    #7285

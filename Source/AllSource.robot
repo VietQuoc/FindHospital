@@ -46,6 +46,11 @@ ${HOPITAL_SPECIAL_LIST}             //div[@class='collapsible-header' and contai
 ${HOPITAL_SERVICE_LIST}             //div[@class='collapsible-header' and contains(normalize-space(),'Dịch vụ')]/following-sibling::div//li
 ${HOPITAL_DOCTOR_LIST}              //div[@class='collapsible-header' and contains(normalize-space(),'Đội ngũ')]/following-sibling::div//article//h4/a
 ${HOPITAL_IMAGE}                    //a[@itemprop='image']
+
+${DOCTOR_NAME_XPATH}                //div[contains(@class,'profile-header')]//h1
+${DOCTOR_INFOR_MORE_BUTTON}         //div[@class='collapsed-version']//a[normalize-space()='Xem đầy đủ']
+${DOCTOR_INFOR_TEXT}                //div[@class='cms']/p
+${DOCTOR_POSITION_LIST}             //div[@class='collapsible-header' and normalize-space()='Chức vụ']/following-sibling::div//li/p
 *** Keywords ***
 Get County And Link
     Go To    https://timbenhvien.vn/
@@ -417,4 +422,67 @@ Get Specialist ID
     :FOR    ${i}    IN RANGE    0    ${count}
     \    Run Keyword If    '${name}'=='@{LS_CHUYENKHOA_NAME}[${i}]'    Return From Keyword    @{LS_CHUYENKHOA_ID}[${i}] 
     
+Run Get Doctor Sources
+    [Arguments]    ${index}    ${count}
     
+    Write File    SaveData\\DoctorInformation${index}.csv    "UniqueID"    "Ten Bac Si"    "Gioi Thieu"    "Chuyen Khoa"    "Chuc Vu"    "Dich Vu"    "Hinh Anh"
+    
+    ${ls_doctor_link}=     Read Data File    SaveData\\DoctorLinkFinal.csv    1
+    ${ls_doctor_ID}=       Read Data File    SaveData\\DoctorLinkFinal.csv    0
+
+    :FOR    ${i}    IN RANGE    ${index}    ${count}
+    \    Get Doctor Info    @{ls_doctor_link}[${i}]    @{ls_doctor_ID}[${i}]    ${index}
+    
+Get Doctor Info
+    [Arguments]    ${link}    ${dcotr_id}    ${index}
+    
+    ${LS_CHUYENKHOA_ID}=    Read Data File    SaveData\\ChuyenKHoa.csv    0
+    ${LS_CHUYENKHOA_NAME}=    Read Data File    SaveData\\ChuyenKHoa.csv    1
+    Set Global Variable    ${LS_CHUYENKHOA_ID}    ${LS_CHUYENKHOA_ID}
+    Set Global Variable    ${LS_CHUYENKHOA_NAME}    ${LS_CHUYENKHOA_NAME}
+    
+    Go To    ${link}#!thong-tin-chi-tiet
+    
+    Wait Until Page Contains Element    ${DOCTOR_NAME_XPATH}
+    ${name}=    Get Text    ${DOCTOR_NAME_XPATH}
+    
+    ${have_more_button}=    Run Keyword And Return Status    Wait Until Page Contains Element    ${DOCTOR_INFOR_MORE_BUTTON}    1s
+    Sleep    0.3s    
+    Run Keyword If    ${have_more_button}    Click Element    ${DOCTOR_INFOR_MORE_BUTTON}
+    ${have_info}=    Run Keyword And Return Status    Page Should Contain Element    ${DOCTOR_INFOR_TEXT}
+    ${info}=    Run Keyword If    ${have_info}    Get Text    ${DOCTOR_INFOR_TEXT}    ELSE    Set Variable    ${EMPTY}
+    ${info}=    Replace String    ${info}    "    ${EMPTY}    
+	${info}=    Replace String    ${info}    '    ${EMPTY}
+	
+	${spec_id}=    Set Variable    ${EMPTY}
+    ${ls_chuyen_khoa}=    Get WebElements    ${HOPITAL_SPECIAL_LIST}
+    ${i_spec}=    Set Variable    0
+    :FOR    ${element}    IN    @{ls_chuyen_khoa}
+    \    ${spec}=    Get Text    ${element}
+    \    ${id}=    Get Specialist ID    ${spec}
+    \    ${spec_id}=    Run Keyword If    '${id}'!='None'    Set Variable If    '${i_spec}'=='0'    ${id}    ${spec_id}, ${id}    ELSE    Set Variable    ${spec_id}
+    \    ${i_spec}=    Run Keyword If    '${id}'!='None'    Evaluate    ${i_spec}+1    ELSE    Set Variable    ${i_spec}
+    
+    ${service}=    Set Variable    ${EMPTY}
+    ${ls_dich_vu}=    Get WebElements    ${HOPITAL_SERVICE_LIST}
+    ${i_spec}=    Set Variable    0
+    :FOR    ${element}    IN    @{ls_dich_vu}
+    \    ${ser_name}=    Get Text    ${element}
+    \    ${service}=    Set Variable If    '${i_spec}'=='0'    ${ser_name}    ${service}, ${ser_name}
+    \    ${i_spec}=    Evaluate    ${i_spec}+1  
+    
+    ${position}=    Set Variable    ${EMPTY}
+    ${ls_chuc_vu}=    Get WebElements    ${DOCTOR_POSITION_LIST}
+    ${i_spec}=    Set Variable    0
+    :FOR    ${element}    IN    @{ls_chuc_vu}
+    \    ${position_name}=    Get Text    ${element}
+    \    ${position}=    Set Variable If    '${i_spec}'=='0'    ${position_name}    ${position}, ${position_name}
+    \    ${i_spec}=    Evaluate    ${i_spec}+1
+    
+    ${image_text}=    Get Element Attribute    ${HOPITAL_IMAGE}    style
+    ${image_text}=    Replace String    ${image_text}    background-image: url("    ${EMPTY}
+    ${image_text}=    Replace String    ${image_text}    ");    ${EMPTY}
+    Run Keyword If    '${image_text}'!=''    Download File    ${image_text}    SaveData\\DoctorImage\\${dcotr_id}
+    ${image_name}=    Set Variable If    '${image_text}'!=''    ${dcotr_id}.jpg    ${EMPTY}
+    
+    Write File    SaveData\\DoctorInformation${index}.csv    "${dcotr_id}"    "${name}"    "${info}"    "${spec_id}"    "${position}"    "${service}"    "${image_name}"

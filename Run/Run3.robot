@@ -1,5 +1,5 @@
 *** Settings ***
-Library    Selenium2Library
+Library    Selenium2Library    run_on_failure=nothing
 Library    Collections
 Library    String    
 Library    ../Source/CSV.py
@@ -24,7 +24,10 @@ Force Tags    all
     # \    Get List Link Hopital And Place Type For Location    ${item}
     # \    Log To Console    Done Run For ${item}    
 
+# Get All Data2
+    # Maximize Browser Window
+    # RUN Get Hopital Datas    14570    DC    7285
 
-Get All Data2
+Run Get Doctor Sources
     Maximize Browser Window
-    RUN Get Hopital Datas    14570    DC    7285
+    Run Get Doctor Sources    10000    15000

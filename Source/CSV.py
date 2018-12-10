@@ -30,4 +30,14 @@ def work_csv_file(filename,mot,hai,ba,bon,nam,sau,bay,tam,chin,muoi,mmot,mhai,mb
     writer = csv.writer(csvfile)
     writer.writerow([mot,hai,ba,bon,nam,sau,bay,tam,chin,muoi,mmot,mhai,mba])
     csvfile.close()
+
+def read_file_as_string(name):
+    with open(name, 'r', encoding="utf8") as myfile:
+        data=myfile.read()
+    return data
+
+def write_file_text(name, text):
+    with open(name, "a", encoding='utf-8') as file:
+        file.write(text)
+    file.close()
     
